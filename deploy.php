@@ -107,13 +107,8 @@ task('build:cache', function ()
     run('cd {{release_path}} && composer cache:clear');
 });
 
-task('upload:secrets', function ()
-{
-    upload(getenv('DOTENV'), '{{deploy_path}}/shared/.env');
-});
 
 task('build:all', [
-    'upload:secrets',
     'build:composer',
     'build:media',
     'build:db',
