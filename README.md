@@ -1,4 +1,8 @@
-# LocalWP w/ Composer - A Git compatible WordPress development environment
+# [PRE-ALPHA] LocalWP w/ Composer - A Git compatible WordPress development environment
+
+## DISCLAIMER
+
+THIS PROJECT IS IN PRE-ALPHA STAGE, USE AT YOUR OWN RISK. DO NOT USE IN PRODUCTION (yet).
 
 This project aims to combine the incredible power of [LocalWP](https://localwp.com/) with the flexibility of [Composer](https://getcomposer.org/).
 This architecture is similar to [Bedrock](https://roots.io/bedrock/), but with a main difference, it's compatible with LocalWP out of the box and does not require any additional server configuration (development, staging, production, etc.).
@@ -95,4 +99,5 @@ For major changes, please open an issue first to discuss what you would like to 
 - [roots/wp-config](https://packagist.org/packages/roots/wp-config)
 - [roots/wp-password-bcrypt](https://packagist.org/packages/roots/wp-password-bcrypt)
 - [roots/bedrock-autoloader](https://packagist.org/packages/roots/bedrock-autoloader)
+
 # LOCALWP-COMPOSER
