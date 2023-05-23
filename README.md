@@ -95,3 +95,4 @@ For major changes, please open an issue first to discuss what you would like to 
 - [roots/wp-config](https://packagist.org/packages/roots/wp-config)
 - [roots/wp-password-bcrypt](https://packagist.org/packages/roots/wp-password-bcrypt)
 - [roots/bedrock-autoloader](https://packagist.org/packages/roots/bedrock-autoloader)
+# LOCALWP-COMPOSER
