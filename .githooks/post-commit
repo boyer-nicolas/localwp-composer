@@ -1,0 +1,10 @@
+#!/bin/bash
+set -e
+source ./bin/messages
+
+if [ -d "vendor" ]; then
+    if grep -q "test" composer.json; then
+        info "Running tests"
+        composer test
+    fi
+fi

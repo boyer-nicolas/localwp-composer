@@ -1,0 +1,105 @@
+#!/bin/bash
+
+source ./bin/env-loader
+source bin/utils
+source bin/media-ssh-config
+
+info "Running media script..."
+
+remoteCommand() {
+    MESSAGE=$1
+    COMMAND=$2
+
+    await "$MESSAGE... "
+    if $SSH_PARAMS $SSH_ARGS "$COMMAND"; then
+        echo "OK"
+    else
+        echo "FAIL"
+    fi
+}
+
+gitIgnore() {
+    log "Making sure .gitignore is up to date"
+    if ! grep -q "sql" "$APP_DIR/.gitignore"; then
+        log "Adding sql to .gitignore"
+        echo "\nsql/*" >>"$APP_DIR/.gitignore"
+        echo "\n!sql/.gitkeep" >>"$APP_DIR/.gitignore"
+        git -C "$APP_DIR" rm --cached -r sql || true
+        touch "$APP_DIR/sql/.gitkeep"
+    fi
+
+    if ! grep -q "web/app/uploads" "$APP_DIR/.gitignore"; then
+        log "Adding uploads to .gitignore"
+        echo "\nweb/app/uploads/*" >>"$APP_DIR/.gitignore"
+        echo "\n!web/app/uploads/.gitkeep" >>"$APP_DIR/.gitignore"
+        git -C "$APP_DIR" rm --cached -r web/app/uploads || true
+        touch "$APP_DIR/web/app/uploads/.gitkeep"
+    fi
+}
+
+pull() {
+    gitIgnore
+    log "Pulling sql dir"
+
+    # Check if any file exists in the $SQL_DIR
+    if ! $SSH_PARAMS $SSH_ARGS "ls -A $REMOTE_DATA_SQL_DIR"; then
+        warning "No sql dir found on remote"
+    else
+        if rsync -avzh --progress --stats --delete -e "$SSH_PARAMS" $SSH_USER@$SSH_HOST:$REMOTE_DATA_SQL_DIR/* $WP_SQL_DIR; then
+            success "Retrieved sql files"
+        else
+            fail "Failed to retrieve sql files"
+        fi
+    fi
+
+    log "Pulling uploads dir"
+
+    # Check if any file exists in the $UPLOADS_DIR
+    if ! $SSH_PARAMS $SSH_ARGS "ls -A $REMOTE_DATA_UPLOADS_DIR"; then
+        warning "No uploads dir found on remote"
+    else
+        if rsync -avzh --progress --stats --delete -e "$SSH_PARAMS" $SSH_USER@$SSH_HOST:"$REMOTE_DATA_UPLOADS_DIR/*" "$WP_UPLOADS_DIR"; then
+            success "Retrieved uploads files"
+        else
+            fail "Failed to retrieve uploads files"
+        fi
+    fi
+}
+
+push() {
+    gitIgnore
+    log "Creating remote dir"
+    if remoteCommand "Creating remote dir" "mkdir -p '$REMOTE_DATA_DIR'"; then
+        success "Created remote dir"
+    else
+        fail "Failed to create remote dir"
+    fi
+
+    log "Pushing sql dir"
+    if rsync -avzh --progress --stats --delete -e "$SSH_PARAMS" "$WP_SQL_DIR" $SSH_USER@$SSH_HOST:"$REMOTE_DATA_SQL_DIR"; then
+        success "Pushed sql dir"
+    else
+        fail "Failed to push sql dir"
+    fi
+
+    log "Pushing uploads dir"
+    if rsync -avzh --progress --stats --delete -e "$SSH_PARAMS" "$WP_UPLOADS_DIR" $SSH_USER@$SSH_HOST:"$REMOTE_DATA_UPLOADS_DIR"; then
+        success "Pushed uploads dir"
+    else
+        fail "Failed to push uploads dir"
+    fi
+}
+
+# Routing
+case $1 in
+pull)
+    pull
+    ;;
+push)
+    push
+    ;;
+*)
+    echo "Usage: $0 {push|pull}"
+    exit 1
+    ;;
+esac

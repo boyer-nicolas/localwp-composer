@@ -1,0 +1,37 @@
+stages:
+  - deploy_production
+  - deploy_staging
+
+deploy_staging:
+  stage: deploy
+  image:
+    name: deployphp/deployer:7
+    entrypoint: [""]
+  before_script:
+    - mkdir -p ~/.ssh
+    - eval $(ssh-agent -s)
+    - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+  script:
+    - dep deploy staging -vvv
+  resource_group: staging
+  only:
+    - staging
+
+deploy_production:
+  stage: deploy
+  image:
+    name: deployphp/deployer:7
+    entrypoint: [""]
+  before_script:
+    - mkdir -p ~/.ssh
+    - eval $(ssh-agent -s)
+    - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+  script:
+    - dep deploy production -vvv
+  resource_group: production
+  only:
+    - production

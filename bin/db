@@ -1,0 +1,87 @@
+#!/bin/bash
+set -e
+
+source ./bin/env-loader
+source ./bin/messages
+
+if [ ! -d "sql" ]; then
+    warning "No sql directory found. Creating"
+    mkdir sql
+fi
+
+wpDbImport() {
+    await "Importing database ... "
+    if wp db import sql/local.sql; then
+        success "Database imported"
+    else
+        fail
+        exit 1
+    fi
+
+    CURRENT_URL=$(wp option get siteurl)
+    if wp search-replace --all-tables "$CURRENT_URL" "$URL"; then
+        success "Siteurl changed"
+    else
+        fail
+        exit 1
+    fi
+
+    await "Flushing cache ... "
+    if wp cache flush; then
+        success "Cache flushed"
+    else
+        fail
+        exit 1
+    fi
+
+}
+
+wpDbDump() {
+    await "Exporting database"
+    if wp db export sql/local.sql; then
+        success
+    else
+        fail
+        exit 1
+    fi
+}
+
+wpDbBackup() {
+    if [[ $USES_DOCKER == "0" ]]; then
+        if wp db export sql/local.sql.bak; then
+            success
+        else
+            fail
+            exit 1
+        fi
+    else
+        if ! stackIsUp; then
+            error "Stack is not up, exiting..."
+            exit 1
+        fi
+        await "Exporting database"
+        if $DC exec -T wordpress bash -c "$WP db export /home/niwee/app/sql/local.sql.bak"; then
+            success
+        else
+            fail
+            exit 1
+        fi
+    fi
+}
+
+# Router
+case "$1" in
+import)
+    wpDbImport
+    ;;
+backup)
+    wpDbBackup
+    ;;
+dump)
+    wpDbDump
+    ;;
+*)
+    info "Usage: $0 {import|dump|backup}"
+    exit 1
+    ;;
+esac

@@ -1,0 +1,91 @@
+{
+    "name": "nicolasboyer/wptest",
+    "type": "project",
+    "authors": [
+        {
+            "name": "Nicolas Boyer",
+            "email": "nicolas@niwee.fr"
+        }
+    ],
+    "require": {
+        "johnpbloch/wordpress": ">=5.1",
+        "roots/wp-config": "^1.0",
+        "vlucas/phpdotenv": "^5.5",
+        "oscarotero/env": "^2.1",
+        "roots/wp-password-bcrypt": "^1.1",
+        "roots/bedrock-autoloader": "^1.0",
+        "filp/whoops": "^2.15"
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://wpackagist.org"
+        }
+    ],
+    "extra": {
+        "wordpress-install-dir": "public",
+        "public/wp-content/plugins/{$name}/": [
+            "type:wordpress-plugin"
+        ],
+        "public/wp-content/themes/{$name}/": [
+            "type:wordpress-theme"
+        ]
+    },
+    "config": {
+        "vendor-dir": "vendor",
+        "allow-plugins": {
+            "johnpbloch/wordpress-core-installer": true
+        }
+    },
+    "scripts": {
+        "env:generate": "export COMPOSER_PROCESS_TIMEOUT=6000 && bin/env",
+        "env:upload": "bin/env upload",
+        "hooks:set": "git config --local core.hooksPath .githooks/ && chmod +x .githooks/*",
+        "hooks:unset": "git config --local --unset core.hooksPath",
+        "media:push": "bin/media push",
+        "media:pull": "bin/media pull",
+        "db:dump": "bin/db dump",
+        "db:backup": "bin/db backup",
+        "db:import": "bin/db import",
+        "deploy:init": "dep init",
+        "deploy:production": "dep deploy production",
+        "deploy:staging": "dep deploy staging",
+        "ssh:production": "dep ssh production",
+        "ssh:staging": "dep ssh staging",
+        "clean": "sudo rm -rf vendor/ composer.lock .env",
+        "pre-install-cmd": [
+            "mv public/wp-content wp-content"
+        ],
+        "pre-update-cmd": [
+            "mv public/wp-content wp-content"
+        ],
+        "post-install-cmd": [
+            "rm -rf public/wp-content && mv wp-content public/wp-content",
+            "cp resources/wp-config.php public/wp-config.php",
+            "composer run set:hooks",
+            "if [ ! -f .env ]; then composer run gen:env; fi"
+        ],
+        "post-update-cmd": [
+            "rm -rf public/wp-content && mv wp-content public/wp-content",
+            "cp resources/wp-config.php public/wp-config.php",
+            "composer run set:hooks",
+            "if [ ! -f .env ]; then composer run gen:env; fi"
+        ]
+    },
+    "scripts-descriptions": {
+        "env:generate": "Generates keys with random characters & asks for database data",
+        "env:upload": "Uploads .env variables to Git",
+        "db:dump": "Export the database to sql/dump.sql",
+        "db:backup": "Export the database to sql/dump.sql.bak",
+        "db:import": "Import to the database from sql/dump.sql",
+        "hooks:set": "Sets git config for local hooks to .githooks",
+        "hooks:unset": "Unsets git config for local hooks to .githooks",
+        "test": "Run the tests via PestPHP",
+        "media:push": "Pushes sql & uploads to the storage server",
+        "media:pull": "Pulls sql & uploads from the storage server",
+        "clean": "Removes vendor/, .env & composer.lock"
+    },
+    "require-dev": {
+        "deployer/deployer": "^7.3"
+    }
+}

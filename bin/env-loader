@@ -1,0 +1,14 @@
+#!/bin/bash
+set -e
+
+source ./bin/messages
+
+info "Loading environment variables"
+
+if [ ! -f ".env" ]; then
+    warning "No .env file found. Skipping"
+else
+    source .env
+fi
+
+WP="wp"

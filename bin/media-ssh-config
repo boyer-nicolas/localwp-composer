@@ -1,0 +1,58 @@
+#!/bin/bash
+
+source bin/utils
+source ./bin/env-loader
+
+info "Running SSH config script..."
+
+if [ "$WP_ENV" = "development" ]; then
+    URL=$WP_DEV_URL
+elif [ "$WP_ENV" = "staging" ]; then
+    URL=$WP_STAGING_URL
+elif [ "$WP_ENV" = "production" ]; then
+    URL=$WP_PROD_URL
+fi
+
+DATE=$(date +"%d %b %Y at %T")
+DATE_DIR=$(date +"%d-%m-%Y-%H-%M-%S")
+
+var_exists() {
+    if [ -z "$1" ]; then
+        error "Variable $2 is not set"
+        exit 1
+    fi
+}
+
+var_exists "$SSH_MEDIA_HOST" "SSH_MEDIA_HOST"
+var_exists "$SSH_MEDIA_USER" "SSH_MEDIA_USER"
+var_exists "$SSH_MEDIA_DIR" "SSH_MEDIA_DIR"
+var_exists "$SSH_MEDIA_PORT" "SSH_MEDIA_PORT"
+var_exists "$SSH_MEDIA_IDENTITY_FILE" "SSH_MEDIA_IDENTITY_FILE"
+
+if [ ! -f "$SSH_MEDIA_IDENTITY_FILE" ]; then
+    error "SSH identity file not found: $SSH_MEDIA_IDENTITY_FILE"
+    exit 1
+fi
+
+APP_DIR="$PWD"
+
+WP_CORE_DIR="$APP_DIR/public"
+WP_CONTENT_DIR="$WP_CORE_DIR/wp-content"
+WP_UPLOADS_DIR="$WP_CONTENT_DIR/uploads"
+WP_SQL_DIR="$APP_DIR/sql"
+
+WP_CLI="wp --path=$WP_CORE_DIR --allow-root"
+
+REPOSITORY_URL=$(git -C "$APP_DIR" config --get remote.origin.url)
+REPOSITORY=$(basename -s .git $REPOSITORY_URL)
+BRANCH=$(git -C "$APP_DIR" rev-parse --abbrev-ref HEAD)
+
+BASE_REMOTE_DATA_DIR="/home/$SSH_MEDIA_USER/$SSH_MEDIA_DIR"
+REMOTE_DATA_DIR="$BASE_REMOTE_DATA_DIR/$REPOSITORY/$BRANCH"
+
+REMOTE_DATA_SQL_DIR="$REMOTE_DATA_DIR/sql/"
+REMOTE_DATA_UPLOADS_DIR="$REMOTE_DATA_DIR/uploads/"
+
+SSH_PARAMS="ssh -i $SSH_MEDIA_IDENTITY_FILE -p $SSH_MEDIA_PORT"
+SSH_ARGS="$SSH_MEDIA_USER@$SSH_MEDIA_HOST"
+RSYNC="rsync -avzh --progress --stats --delete -e "$SSH_PARAMS""

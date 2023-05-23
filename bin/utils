@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e
+
+source bin/messages
+
+# Legacy Functions kept to prevent breaking changes
+function write_status {
+    info "$1"
+}
+
+function ok {
+    success "$1"
+}
+
+function fail {
+    error "$1"
+}
+
+function log {
+    info "$1"
+}
